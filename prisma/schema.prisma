@@ -1,0 +1,104 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+model Setting {
+  key         String   @id
+  value       String?
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model Paper {
+  id        String      @id @default(uuid())
+  title     String
+  authors   String[]
+  doi       String?     @unique
+  year      Int?
+  rawPath   String?     @map("raw_path")
+  url       String?
+  abstract  String?
+  status    PaperStatus @default(PENDING)
+  errorMsg  String?     @map("error_msg")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  formulae ZsyntaxFormula[]
+  theorems Theorem[]
+
+  @@map("papers")
+}
+
+enum PaperStatus {
+  PENDING
+  DOWNLOADING
+  ANALYZING
+  EXTRACTING
+  TRANSLATING
+  INFERRING
+  VECTORIZING
+  DONE
+  ERROR
+}
+
+model ZsyntaxFormula {
+  id         String      @id @default(uuid())
+  paperId    String      @map("paper_id")
+  type       FormulaType
+  formula    String
+  molecules  String[]
+  confidence Float       @default(1.0)
+  sourceText String?     @map("source_text")
+  metadata   Json?
+  /// pgvector embedding — populated after analysis
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  paper    Paper            @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  theorems TheoremFormula[]
+
+  @@map("zsyntax_formulae")
+}
+
+enum FormulaType {
+  EVF
+  LVF
+  THEOREM
+}
+
+model Theorem {
+  id              String   @id @default(uuid())
+  paperId         String   @map("paper_id")
+  derivationChain String[] @map("derivation_chain")
+  isValidated     Boolean  @default(false) @map("is_validated")
+  confidence      Float    @default(0.5)
+  summary         String?
+  reasoning       String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  paper    Paper            @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  formulae TheoremFormula[]
+
+  @@map("theorems")
+}
+
+model TheoremFormula {
+  theoremId String @map("theorem_id")
+  formulaId String @map("formula_id")
+  order     Int
+
+  theorem Theorem        @relation(fields: [theoremId], references: [id], onDelete: Cascade)
+  formula ZsyntaxFormula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+
+  @@id([theoremId, formulaId])
+  @@map("theorem_formulae")
+}

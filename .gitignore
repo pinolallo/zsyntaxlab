@@ -34,3 +34,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# local env (keep .env.example, ignore .env with real secrets)
+.env
+
+# downloaded papers (user data)
+/papers/
+
+# prisma migrations lock (generated)
+prisma/migrations/
