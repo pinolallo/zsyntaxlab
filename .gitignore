@@ -43,5 +43,5 @@ next-env.d.ts
 # downloaded papers (user data)
 /papers/
 
-# prisma migrations lock (generated)
-prisma/migrations/
+# prisma: do NOT ignore migrations — they must be committed
+# prisma/migrations/
